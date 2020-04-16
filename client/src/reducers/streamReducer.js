@@ -1,17 +1,5 @@
 import _ from 'lodash';
 
-const isElementInArray = (array, inputElement) => {
-  const resultArray = array.filter(
-    (arrayElement) => arrayElement === inputElement
-  );
-
-  if (resultArray.length > 0) {
-    return true;
-  }
-
-  return false;
-};
-
 export default (state = {}, action) => {
   switch (action.type) {
     case 'CREATE_STREAM':

@@ -1,8 +1,6 @@
 import streams from '../apis/streams';
 import history from '../history';
 
-import isElementInArray from './helpers';
-
 export const signIn = (userId) => {
   return {
     type: 'SIGN_IN',
@@ -17,37 +15,40 @@ export const signOut = (userId) => {
   };
 };
 
+// Action creator for liking a stream:
+
 export const likeStream = (userId, streamId) => async (dispatch, getState) => {
   const { usersWhoLikedThis } = getState().streams[streamId];
-  const hasUserLikedStream = isElementInArray(usersWhoLikedThis, userId);
-
-  if (!hasUserLikedStream) {
-    const response = await streams.patch(`/streams/${streamId}`, {
-      usersWhoLikedThis: [...usersWhoLikedThis, userId],
-    });
-    dispatch({ type: 'LIKE_STREAM', payload: response.data });
-  } else {
-    return null;
-  }
+  const response = await streams.patch(`/streams/${streamId}`, {
+    usersWhoLikedThis: [...usersWhoLikedThis, userId],
+  });
+  dispatch({ type: 'LIKE_STREAM', payload: response.data });
 };
+
+// Action creator for un-liking a liked stream:
 
 export const removeLikeFromStream = (userId, streamId) => async (
   dispatch,
   getState
 ) => {
   const { usersWhoLikedThis } = getState().streams[streamId];
-  const hasUserLikedStream = isElementInArray(usersWhoLikedThis, userId);
+  const response = await streams.patch(`/streams/${streamId}`, {
+    usersWhoLikedThis: [...usersWhoLikedThis].filter((user) => user !== userId),
+  });
+  dispatch({ type: 'REMOVE_STREAM_LIKE', payload: response.data });
+};
 
-  if (hasUserLikedStream) {
-    const response = await streams.patch(`/streams/${streamId}`, {
-      usersWhoLikedThis: [...usersWhoLikedThis].filter(
-        (user) => user !== userId
-      ),
-    });
-    dispatch({ type: 'REMOVE_STREAM_LIKE', payload: response.data });
-  } else {
-    return null;
-  }
+// Action creator for creating a comment on a stream:
+
+export const createComment = (streamId, userId, body) => async (
+  dispatch,
+  getState
+) => {
+  const currentComments = getState().streams[streamId].comments;
+  const response = await streams.patch(`/streams/${streamId}`, {
+    comments: [...currentComments, { body, userId }],
+  });
+  dispatch({ type: 'CREATE_COMMENT', payload: response.data });
 };
 
 export const createStream = (formValues) => async (dispatch, getState) => {
@@ -56,6 +57,7 @@ export const createStream = (formValues) => async (dispatch, getState) => {
     ...formValues,
     userId,
     usersWhoLikedThis: [],
+    comments: [],
   });
   dispatch({
     type: 'CREATE_STREAM',
